@@ -4,6 +4,8 @@ import authRoutes from './routes/auth.routes.js';
 import noteRoutes from './routes/note.routes.js';
 import adminRoutes from './routes/admin.routes.js';
 import aggregationRoutes from './routes/aggregation.routes.js';
+import postRoutes from './routes/post.routes.js';
+import userRoutes from './routes/user.routes.js';
 
 export const app: Application = express();
 
@@ -15,6 +17,8 @@ app.use('/api/auth', authRoutes);
 app.use('/api/notes', noteRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/aggregations', aggregationRoutes);
+app.use('/api/posts', postRoutes);
+app.use('/api/users', userRoutes);
 
 // Health check
 app.get('/api/health', (req: Request, res: Response) => {

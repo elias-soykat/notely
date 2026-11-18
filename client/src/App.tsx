@@ -73,7 +73,7 @@ export const App: React.FC = () => {
             {currentUser.role.toUpperCase()}
           </span>
         </div>
-        <button onClick={handleLogout} style={{ background: '#666' }}>
+        <button type="button" className="btn-secondary" onClick={handleLogout}>
           Logout
         </button>
       </header>

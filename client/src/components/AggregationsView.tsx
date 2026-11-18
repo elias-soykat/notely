@@ -62,7 +62,7 @@ export const AggregationsView: React.FC<{ currentUser: any }> = ({ currentUser }
         <p style={{ color: '#666', fontSize: 13 }}>
           Computed via single <code>User.aggregate()</code> pipeline using <code>$unwind</code> &rarr; <code>$group</code> &rarr; <code>$sort</code>.
         </p>
-        <button onClick={fetchInterestsAggregation}>Refresh Interests</button>
+        <button type="button" className="btn-secondary" onClick={fetchInterestsAggregation}>Refresh Interests</button>
         {interestGroups.length === 0 ? (
           <p>No interest groups found.</p>
         ) : (
@@ -80,24 +80,25 @@ export const AggregationsView: React.FC<{ currentUser: any }> = ({ currentUser }
                   <td><strong>{g._id}</strong></td>
                   <td><span className="badge">{g.count}</span></td>
                   <td>
-                    {g.users.map((u: any) => (
-                      <button
-                        key={u._id}
-                        onClick={() => {
-                          setTargetUserId(u._id);
-                          fetchUserPosts(u._id, 1);
-                        }}
-                        style={{
-                          background: '#f0f0f0',
-                          color: '#0066cc',
-                          border: '1px solid #ccc',
-                          marginRight: 4,
-                          fontSize: 12,
-                        }}
-                      >
-                        {u.name} ({u.email})
-                      </button>
-                    ))}
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+                      {g.users.map((u: any) => (
+                        <button
+                          key={u._id}
+                          type="button"
+                          className="btn-secondary"
+                          onClick={() => {
+                            setTargetUserId(u._id);
+                            fetchUserPosts(u._id, 1);
+                          }}
+                          style={{
+                            fontSize: 12,
+                            padding: '4px 8px',
+                          }}
+                        >
+                          {u.name} ({u.email})
+                        </button>
+                      ))}
+                    </div>
                   </td>
                 </tr>
               ))}
@@ -137,14 +138,14 @@ export const AggregationsView: React.FC<{ currentUser: any }> = ({ currentUser }
         <p style={{ color: '#666', fontSize: 13 }}>
           Computed via single <code>User.aggregate()</code> pipeline with <code>$match: &#123; _id: userId &#125;</code> and <code>$lookup</code> sub-pipeline with internal sorting and pagination.
         </p>
-        <div style={{ display: 'flex', gap: 8, marginBottom: 12 }}>
+        <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginBottom: 12 }}>
           <input
             placeholder="Enter User ObjectId"
             value={targetUserId}
             onChange={(e) => setTargetUserId(e.target.value)}
-            style={{ flex: 1 }}
+            style={{ flex: 1, margin: 0 }}
           />
-          <button onClick={() => fetchUserPosts(targetUserId, 1)}>Fetch User Posts</button>
+          <button type="button" onClick={() => fetchUserPosts(targetUserId, 1)}>Fetch User Posts</button>
         </div>
 
         {userPostsResult && (

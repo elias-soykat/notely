@@ -44,26 +44,44 @@
         cursor: pointer;
         background: #0066cc;
         color: white;
-        border: none;
+        border: 1px solid transparent;
         border-radius: 4px;
-        padding: 9px 16px;
+        padding: 7px 14px;
         font-family: inherit;
-        font-size: 14px;
+        font-size: 13px;
         font-weight: 500;
-        transition: background 0.15s ease;
+        line-height: 1.4;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        transition: background-color 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
       }
       button:hover {
         background: #0052a3;
       }
       button:disabled {
-        background: #ccc;
+        background: #e2e8f0;
+        color: #94a3b8;
+        border-color: transparent;
         cursor: not-allowed;
       }
-      button.danger {
-        background: #cc0000;
+      button.btn-secondary {
+        background: #f8fafc;
+        color: #334155;
+        border: 1px solid #cbd5e1;
       }
-      button.danger:hover {
-        background: #a30000;
+      button.btn-secondary:hover {
+        background: #f1f5f9;
+        border-color: #94a3b8;
+      }
+      button.danger, button.btn-danger {
+        background: #dc2626;
+        color: #ffffff;
+        border-color: #dc2626;
+      }
+      button.danger:hover, button.btn-danger:hover {
+        background: #b91c1c;
+        border-color: #b91c1c;
       }
       table {
         width: 100%;
@@ -71,12 +89,28 @@
         margin-top: 10px;
       }
       th, td {
-        border: 1px solid #ccc;
-        padding: 10px;
+        border: 1px solid #e2e8f0;
+        padding: 10px 14px;
         text-align: left;
+        vertical-align: middle;
       }
       th {
-        background: #f0f0f0;
+        background: #f8fafc;
+        font-weight: 600;
+        color: #334155;
+      }
+      tr:hover td {
+        background-color: #fafbfd;
+      }
+      th.actions-col, td.actions-col {
+        width: 1%;
+        white-space: nowrap;
+      }
+      .actions-cell {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        flex-wrap: nowrap;
       }
       .badge {
         display: inline-block;
@@ -87,19 +121,34 @@
         margin-right: 4px;
       }
       .badge-admin {
-        background: #ffeb3b;
+        background: #fef08a;
+        color: #854d0e;
+        font-weight: 600;
+      }
+      .nav-tabs {
+        display: flex;
+        gap: 8px;
+        margin-bottom: 20px;
+        border-bottom: 1px solid #e2e8f0;
+        padding-bottom: 8px;
       }
       .nav-tabs button {
-        background: #eee;
-        color: #333;
-        margin-right: 6px;
+        background: #f1f5f9;
+        color: #475569;
+        border: 1px solid #cbd5e1;
+        border-radius: 4px;
+        padding: 8px 16px;
+      }
+      .nav-tabs button:hover {
+        background: #e2e8f0;
       }
       .nav-tabs button.active {
         background: #0066cc;
-        color: #fff;
+        color: #ffffff;
+        border-color: #0066cc;
       }
       .pagination {
-        margin: 14px 0;
+        margin: 16px 0;
         display: flex;
         gap: 8px;
         align-items: center;
@@ -127,8 +176,8 @@
       .modal-actions {
         display: flex;
         justify-content: flex-end;
-        gap: 8px;
-        margin-top: 20px;
+        gap: 10px;
+        margin-top: 24px;
       }
     </style>
   </head>

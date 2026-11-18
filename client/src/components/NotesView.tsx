@@ -147,7 +147,7 @@ export const NotesView: React.FC<NotesViewProps> = ({ currentUser }) => {
                 <th>Content</th>
                 <th>Created At</th>
                 {currentUser.role === 'admin' && <th>User ID</th>}
-                <th>Actions</th>
+                <th className="actions-col">Actions</th>
               </tr>
             </thead>
             <tbody>
@@ -157,20 +157,27 @@ export const NotesView: React.FC<NotesViewProps> = ({ currentUser }) => {
                   <td>{note.content}</td>
                   <td>{new Date(note.createdAt).toLocaleString()}</td>
                   {currentUser.role === 'admin' && <td><code>{note.userId}</code></td>}
-                  <td>
-                    {note.userId === currentUser.id && (
-                      <button onClick={() => openEditModal(note)}>
-                        Edit
-                      </button>
-                    )}{' '}
-                    {(note.userId === currentUser.id || currentUser.role === 'admin') && (
-                      <button
-                        className="danger"
-                        onClick={() => openDeleteModal(note)}
-                      >
-                        Delete
-                      </button>
-                    )}
+                  <td className="actions-col">
+                    <div className="actions-cell">
+                      {note.userId === currentUser.id && (
+                        <button
+                          type="button"
+                          className="btn-secondary"
+                          onClick={() => openEditModal(note)}
+                        >
+                          Edit
+                        </button>
+                      )}
+                      {(note.userId === currentUser.id || currentUser.role === 'admin') && (
+                        <button
+                          type="button"
+                          className="danger"
+                          onClick={() => openDeleteModal(note)}
+                        >
+                          Delete
+                        </button>
+                      )}
+                    </div>
                   </td>
                 </tr>
               ))}
@@ -221,8 +228,8 @@ export const NotesView: React.FC<NotesViewProps> = ({ currentUser }) => {
               <div className="modal-actions">
                 <button
                   type="button"
+                  className="btn-secondary"
                   onClick={() => setEditingNote(null)}
-                  style={{ background: '#777' }}
                 >
                   Cancel
                 </button>
@@ -250,8 +257,8 @@ export const NotesView: React.FC<NotesViewProps> = ({ currentUser }) => {
             <div className="modal-actions">
               <button
                 type="button"
+                className="btn-secondary"
                 onClick={() => setDeletingNote(null)}
-                style={{ background: '#777' }}
               >
                 Cancel
               </button>

@@ -179,7 +179,7 @@ export const AdminView: React.FC = () => {
               <th>Role</th>
               <th>Interests</th>
               <th>Created At</th>
-              <th>Actions</th>
+              <th className="actions-col">Actions</th>
             </tr>
           </thead>
           <tbody>
@@ -194,13 +194,23 @@ export const AdminView: React.FC = () => {
                 </td>
                 <td>{u.interests?.join(', ') || '-'}</td>
                 <td>{new Date(u.createdAt).toLocaleDateString()}</td>
-                <td>
-                  <button onClick={() => openRoleChangeModal(u)}>
-                    Switch to {u.role === 'admin' ? 'User' : 'Admin'}
-                  </button>{' '}
-                  <button className="danger" onClick={() => openDeleteModal(u)}>
-                    Delete
-                  </button>
+                <td className="actions-col">
+                  <div className="actions-cell">
+                    <button
+                      type="button"
+                      className="btn-secondary"
+                      onClick={() => openRoleChangeModal(u)}
+                    >
+                      Switch to {u.role === 'admin' ? 'User' : 'Admin'}
+                    </button>
+                    <button
+                      type="button"
+                      className="danger"
+                      onClick={() => openDeleteModal(u)}
+                    >
+                      Delete
+                    </button>
+                  </div>
                 </td>
               </tr>
             ))}
@@ -240,8 +250,8 @@ export const AdminView: React.FC = () => {
             <div className="modal-actions">
               <button
                 type="button"
+                className="btn-secondary"
                 onClick={() => setRoleChangeTarget(null)}
-                style={{ background: '#777' }}
               >
                 Cancel
               </button>
@@ -272,8 +282,8 @@ export const AdminView: React.FC = () => {
             <div className="modal-actions">
               <button
                 type="button"
+                className="btn-secondary"
                 onClick={() => setDeletingUser(null)}
-                style={{ background: '#777' }}
               >
                 Cancel
               </button>

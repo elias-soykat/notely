@@ -79,9 +79,21 @@ export async function updateUser(req: Request, res: Response): Promise<void> {
     const { name, role, interests, password } = req.body;
 
     if (name !== undefined) user.name = name.trim();
-    if (role !== undefined && ['user', 'admin'].includes(role)) user.role = role;
+    if (role !== undefined) {
+      if (!['user', 'admin'].includes(role)) {
+        res.status(400).json({ error: 'Validation failed: Role must be either user or admin' });
+        return;
+      }
+      user.role = role;
+    }
     if (interests !== undefined && Array.isArray(interests)) user.interests = interests;
-    if (password && password.length >= 6) user.password = password;
+    if (password !== undefined) {
+      if (typeof password !== 'string' || password.length < 6) {
+        res.status(400).json({ error: 'Password must be at least 6 characters long' });
+        return;
+      }
+      user.password = password;
+    }
 
     await user.save();
 
@@ -96,6 +108,10 @@ export async function updateUser(req: Request, res: Response): Promise<void> {
       },
     });
   } catch (error: any) {
+    if (error.name === 'ValidationError') {
+      res.status(400).json({ error: error.message });
+      return;
+    }
     res.status(500).json({ error: error.message || 'Error updating user' });
   }
 }

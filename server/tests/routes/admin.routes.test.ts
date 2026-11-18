@@ -98,6 +98,40 @@ describe('Admin User Management Routes', () => {
     expect(res.body.user.interests).toEqual(['devops', 'security']);
   });
 
+  it('returns 400 when admin provides password shorter than 6 characters', async () => {
+    const targetUser = await User.create({
+      name: 'Short Pass User',
+      email: 'shortpass@admintest.test',
+      password: 'password123',
+      role: 'user',
+    });
+
+    const res = await request(app)
+      .put(`/api/admin/users/${targetUser._id}`)
+      .set('Authorization', `Bearer ${adminToken}`)
+      .send({ password: '123' });
+
+    expect(res.status).toBe(400);
+    expect(res.body.error).toMatch(/at least 6 characters/i);
+  });
+
+  it('returns 400 when payload triggers validation error', async () => {
+    const targetUser = await User.create({
+      name: 'Validation Error User',
+      email: 'validation@admintest.test',
+      password: 'password123',
+      role: 'user',
+    });
+
+    const res = await request(app)
+      .put(`/api/admin/users/${targetUser._id}`)
+      .set('Authorization', `Bearer ${adminToken}`)
+      .send({ role: 'super_hacker_role' });
+
+    expect(res.status).toBe(400);
+    expect(res.body.error).toMatch(/validation|role/i);
+  });
+
   it('allows admin to delete a user', async () => {
     const toDelete = await User.create({
       name: 'To Delete',

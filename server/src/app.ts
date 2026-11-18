@@ -27,6 +27,10 @@ app.get('/api/health', (req: Request, res: Response) => {
 
 // Centralized error handler
 app.use((err: any, req: Request, res: Response, next: NextFunction) => {
+  if (err.name === 'ValidationError' || err.name === 'CastError') {
+    res.status(400).json({ error: err.message });
+    return;
+  }
   console.error('Unhandled server error:', err);
   res.status(err.status || 500).json({
     error: err.message || 'Internal server error',

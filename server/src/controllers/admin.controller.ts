@@ -1,6 +1,6 @@
 import { Request, Response } from 'express';
 import mongoose from 'mongoose';
-import { User } from '../models/User.js';
+import { User, normalizeInterests } from '../models/User.js';
 import { Note } from '../models/Note.js';
 import { Post } from '../models/Post.js';
 import { parsePaginationParams, createPaginatedResponse } from '../utils/pagination.js';
@@ -44,7 +44,7 @@ export async function createUser(req: Request, res: Response): Promise<void> {
       email: email.toLowerCase().trim(),
       password,
       role: role === 'admin' ? 'admin' : 'user',
-      interests: Array.isArray(interests) ? interests : [],
+      interests: normalizeInterests(interests),
     });
 
     res.status(201).json({
@@ -86,7 +86,7 @@ export async function updateUser(req: Request, res: Response): Promise<void> {
       }
       user.role = role;
     }
-    if (interests !== undefined && Array.isArray(interests)) user.interests = interests;
+    if (interests !== undefined) user.interests = normalizeInterests(interests);
     if (password !== undefined) {
       if (typeof password !== 'string' || password.length < 6) {
         res.status(400).json({ error: 'Password must be at least 6 characters long' });
@@ -121,6 +121,12 @@ export async function deleteUser(req: Request, res: Response): Promise<void> {
     const id = req.params.id as string;
     if (!id || !mongoose.Types.ObjectId.isValid(id)) {
       res.status(400).json({ error: 'Invalid user ID format' });
+      return;
+    }
+
+    // Security guard: Prevent admin from deleting their own account
+    if (req.user && req.user.id === id) {
+      res.status(400).json({ error: 'Cannot delete your own admin account' });
       return;
     }
 

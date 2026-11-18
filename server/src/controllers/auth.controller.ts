@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import { User } from '../models/User.js';
+import { User, normalizeInterests } from '../models/User.js';
 import { generateToken } from '../utils/jwt.js';
 
 export async function register(req: Request, res: Response): Promise<void> {
@@ -28,7 +28,7 @@ export async function register(req: Request, res: Response): Promise<void> {
       email: email.toLowerCase().trim(),
       password,
       role: 'user',
-      interests: Array.isArray(interests) ? interests : [],
+      interests: normalizeInterests(interests),
     });
 
     const token = generateToken({

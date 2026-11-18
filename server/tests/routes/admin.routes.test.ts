@@ -150,4 +150,16 @@ describe('Admin User Management Routes', () => {
     const check = await User.findById(toDelete._id);
     expect(check).toBeNull();
   });
+
+  it('prevents an admin from deleting their own account', async () => {
+    const res = await request(app)
+      .delete(`/api/admin/users/${adminId}`)
+      .set('Authorization', `Bearer ${adminToken}`);
+
+    expect(res.status).toBe(400);
+    expect(res.body.error).toMatch(/cannot delete your own/i);
+
+    const check = await User.findById(adminId);
+    expect(check).not.toBeNull();
+  });
 });

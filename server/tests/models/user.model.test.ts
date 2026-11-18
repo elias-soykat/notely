@@ -36,6 +36,17 @@ describe('User Model', () => {
     expect(isWrong).toBe(false);
   });
 
+  it('normalizes user interests by trimming, lowercasing, and deduplicating', async () => {
+    const user = await User.create({
+      name: 'Interest User',
+      email: 'interestnorm@test.com',
+      password: 'password123',
+      interests: [' Chess ', 'chess', 'CHESS', 'Reading', '  '],
+    });
+
+    expect(user.interests).toEqual(['chess', 'reading']);
+  });
+
   it('enforces unique email constraint', async () => {
     // Wait for index creation on collection
     await User.init();

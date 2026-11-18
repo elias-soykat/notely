@@ -49,8 +49,24 @@ const UserSchema = new Schema<IUser>(
 UserSchema.index({ email: 1 }, { unique: true });
 UserSchema.index({ createdAt: -1, _id: -1 });
 
-// Pre-save password hashing hook
+// Helper to normalize interests: trim, lowercase, remove empty, and deduplicate
+export function normalizeInterests(interests: any): string[] {
+  if (!Array.isArray(interests)) return [];
+  return Array.from(
+    new Set(
+      interests
+        .map((i) => (typeof i === 'string' ? i.trim().toLowerCase() : ''))
+        .filter(Boolean)
+    )
+  );
+}
+
+// Pre-save hook: normalizes interests and hashes password
 UserSchema.pre<IUser>('save', async function (next) {
+  if (this.interests && Array.isArray(this.interests)) {
+    this.interests = normalizeInterests(this.interests);
+  }
+
   if (!this.isModified('password')) {
     return next();
   }

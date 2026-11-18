@@ -47,9 +47,9 @@ export async function getUsersByInterests(req: Request, res: Response): Promise<
  */
 export async function getUserPosts(req: Request, res: Response): Promise<void> {
   try {
-    const { userId } = req.params;
+    const userId = req.params.userId as string;
 
-    if (!mongoose.Types.ObjectId.isValid(userId)) {
+    if (!userId || !mongoose.Types.ObjectId.isValid(userId)) {
       res.status(400).json({ error: 'Invalid user ID format' });
       return;
     }

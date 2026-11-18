@@ -68,8 +68,8 @@ export async function getNoteById(req: Request, res: Response): Promise<void> {
       return;
     }
 
-    const { id } = req.params;
-    if (!mongoose.Types.ObjectId.isValid(id)) {
+    const id = req.params.id as string;
+    if (!id || !mongoose.Types.ObjectId.isValid(id)) {
       res.status(400).json({ error: 'Invalid note ID format' });
       return;
     }
@@ -99,8 +99,8 @@ export async function updateNote(req: Request, res: Response): Promise<void> {
       return;
     }
 
-    const { id } = req.params;
-    if (!mongoose.Types.ObjectId.isValid(id)) {
+    const id = req.params.id as string;
+    if (!id || !mongoose.Types.ObjectId.isValid(id)) {
       res.status(400).json({ error: 'Invalid note ID format' });
       return;
     }
@@ -136,8 +136,8 @@ export async function deleteNote(req: Request, res: Response): Promise<void> {
       return;
     }
 
-    const { id } = req.params;
-    if (!mongoose.Types.ObjectId.isValid(id)) {
+    const id = req.params.id as string;
+    if (!id || !mongoose.Types.ObjectId.isValid(id)) {
       res.status(400).json({ error: 'Invalid note ID format' });
       return;
     }

@@ -151,7 +151,7 @@ export const AggregationsView: React.FC<{ currentUser: any }> = ({ currentUser }
         {userPostsResult && (
           <div>
             <h4>
-              Author: {userPostsResult.name} ({userPostsResult.email}) - {userPostsResult.posts?.length || 0} posts shown
+              Author: {userPostsResult.name} ({userPostsResult.email}) - {userPostsResult.posts?.length || 0} of {userPostsResult.totalCount ?? userPostsResult.posts?.length ?? 0} posts shown
             </h4>
             {userPostsResult.posts?.length === 0 ? (
               <p>No posts written by this user yet.</p>
@@ -179,8 +179,11 @@ export const AggregationsView: React.FC<{ currentUser: any }> = ({ currentUser }
               <button disabled={postPage <= 1} onClick={() => setPostPage((p) => Math.max(1, p - 1))}>
                 &laquo; Prev
               </button>
-              <span>Page {postPage}</span>
-              <button onClick={() => setPostPage((p) => p + 1)}>
+              <span>Page {postPage} of {userPostsResult.totalPages || 1}</span>
+              <button
+                disabled={postPage >= (userPostsResult.totalPages || 1)}
+                onClick={() => setPostPage((p) => p + 1)}
+              >
                 Next &raquo;
               </button>
             </div>

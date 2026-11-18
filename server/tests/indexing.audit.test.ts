@@ -49,8 +49,12 @@ describe('Database Indexing & Query Execution Plan Audit', () => {
       const indexes = await Post.collection.indexes();
       const indexNames = indexes.map((idx) => idx.name).sort();
 
-      // Required: default _id_, userId_1_createdAt_-1__id_-1 (lookup + sort)
-      expect(indexNames).toEqual(['_id_', 'userId_1_createdAt_-1__id_-1']);
+      // Required: default _id_, createdAt_-1__id_-1 (public list sort), userId_1_createdAt_-1__id_-1 (lookup + sort)
+      expect(indexNames).toEqual([
+        '_id_',
+        'createdAt_-1__id_-1',
+        'userId_1_createdAt_-1__id_-1',
+      ]);
     });
   });
 
@@ -104,6 +108,17 @@ describe('Database Indexing & Query Execution Plan Audit', () => {
       const ixscan = findStage(explain.queryPlanner.winningPlan, 'IXSCAN');
       expect(ixscan).toBeDefined();
       expect(ixscan.indexName).toBe('userId_1_createdAt_-1__id_-1');
+    });
+
+    it('Public posts listing query utilizes IXSCAN on createdAt tie-breaker index', async () => {
+      const explain: any = await Post.find()
+        .sort({ createdAt: -1, _id: -1 })
+        .limit(10)
+        .explain('executionStats');
+
+      const ixscan = findStage(explain.queryPlanner.winningPlan, 'IXSCAN');
+      expect(ixscan).toBeDefined();
+      expect(ixscan.indexName).toBe('createdAt_-1__id_-1');
     });
   });
 });

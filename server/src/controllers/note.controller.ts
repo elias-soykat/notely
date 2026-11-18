@@ -36,7 +36,11 @@ export async function getNotes(req: Request, res: Response): Promise<void> {
 
     const filter: mongoose.FilterQuery<INote> = {};
     if (req.user.role === 'admin') {
-      if (req.query.userId && mongoose.Types.ObjectId.isValid(req.query.userId as string)) {
+      if (req.query.userId) {
+        if (!mongoose.Types.ObjectId.isValid(req.query.userId as string)) {
+          res.status(400).json({ error: 'Invalid user ID format' });
+          return;
+        }
         filter.userId = req.query.userId;
       }
     } else {

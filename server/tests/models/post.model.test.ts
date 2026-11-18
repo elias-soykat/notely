@@ -32,7 +32,7 @@ describe('Post Model', () => {
     expect(post.updatedAt).toBeDefined();
   });
 
-  it('declares exact required schema index for lookup and tie-breaker sorting', () => {
+  it('declares exact required schema indexes for lookup and public post listing', () => {
     const indexes = Post.schema.indexes();
 
     const userPostsIndex = indexes.find(
@@ -40,7 +40,12 @@ describe('Post Model', () => {
     );
     expect(userPostsIndex).toBeDefined();
 
-    // Verify exactly 1 custom index is declared
-    expect(indexes.length).toBe(1);
+    const publicPostsIndex = indexes.find(
+      ([fields]) => fields.createdAt === -1 && fields._id === -1
+    );
+    expect(publicPostsIndex).toBeDefined();
+
+    // Verify exactly 2 custom indexes are declared
+    expect(indexes.length).toBe(2);
   });
 });

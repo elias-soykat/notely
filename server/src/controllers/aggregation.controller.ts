@@ -39,7 +39,7 @@ export async function getUserPosts(req: Request, res: Response): Promise<void> {
       return;
     }
 
-    const { limit, skip } = parsePaginationParams(req.query);
+    const { page, limit, skip } = parsePaginationParams(req.query);
     const userObjectId = new mongoose.Types.ObjectId(userId);
 
     const results = await User.aggregate([
@@ -55,10 +55,8 @@ export async function getUserPosts(req: Request, res: Response): Promise<void> {
               },
             },
             { $sort: { createdAt: -1, _id: -1 } },
-            { $skip: skip },
-            { $limit: limit },
           ],
-          as: 'posts',
+          as: 'allPosts',
         },
       },
       {
@@ -68,8 +66,9 @@ export async function getUserPosts(req: Request, res: Response): Promise<void> {
           email: 1,
           role: 1,
           interests: 1,
-          posts: 1,
           createdAt: 1,
+          totalCount: { $size: '$allPosts' },
+          posts: { $slice: ['$allPosts', skip, limit] },
         },
       },
     ]);
@@ -79,7 +78,17 @@ export async function getUserPosts(req: Request, res: Response): Promise<void> {
       return;
     }
 
-    res.status(200).json(results[0]);
+    const userDoc = results[0];
+    const totalCount = typeof userDoc.totalCount === 'number' ? userDoc.totalCount : 0;
+    const totalPages = Math.ceil(totalCount / limit) || 1;
+
+    res.status(200).json({
+      ...userDoc,
+      page,
+      limit,
+      totalCount,
+      totalPages,
+    });
   } catch (error: unknown) {
     res.status(500).json({ error: getErrorMessage(error) });
   }

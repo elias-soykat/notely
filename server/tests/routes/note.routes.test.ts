@@ -115,6 +115,15 @@ describe('Note Routes & Deterministic Pagination', () => {
     expect(res.body.data.length).toBe(2);
   });
 
+  it('returns 400 when admin provides invalid userId format in query parameter', async () => {
+    const res = await request(app)
+      .get('/api/notes?userId=not-a-valid-id')
+      .set('Authorization', `Bearer ${adminToken}`);
+
+    expect(res.status).toBe(400);
+    expect(res.body.error).toMatch(/invalid user id format/i);
+  });
+
   it('enforces RBAC on note viewing, editing, and deletion', async () => {
     const note = await Note.create({
       title: 'Note Private',

@@ -88,6 +88,10 @@ describe('Scenario 2: User Posts Aggregation with $lookup', () => {
     expect(res.body.name).toBe('Author One');
     expect(res.body.posts).toBeInstanceOf(Array);
     expect(res.body.posts.length).toBe(2);
+    expect(res.body.totalCount).toBe(3);
+    expect(res.body.totalPages).toBe(2);
+    expect(res.body.page).toBe(1);
+    expect(res.body.limit).toBe(2);
 
     // Verify posts belong to user 1
     expect(res.body.posts.every((p: any) => p.userId === user1Id)).toBe(true);

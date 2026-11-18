@@ -31,5 +31,6 @@ const PostSchema = new Schema<IPost>(
 );
 
 PostSchema.index({ userId: 1, createdAt: -1, _id: -1 });
+PostSchema.index({ createdAt: -1, _id: -1 });
 
 export const Post: Model<IPost> = mongoose.model<IPost>('Post', PostSchema);

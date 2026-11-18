@@ -38,6 +38,7 @@ Per the core requirement to create **only strictly required indexes** and define
 | **Note** | `{ userId: 1, createdAt: -1, _id: -1 }` | User note listing | Equality filter on `userId` combined with compound descending sort on `createdAt` and `_id`. |
 | **Note** | `{ createdAt: -1, _id: -1 }` | Admin viewing all notes | Supports global descending date sort with `_id` tie-breaker. |
 | **Post** | `{ userId: 1, createdAt: -1, _id: -1 }` | User posts retrieval & `$lookup` | Supports filtering by `userId`, `$lookup` foreignField matching, and tie-breaker sorting. |
+| **Post** | `{ createdAt: -1, _id: -1 }` | Public posts listing | Supports global descending date sort with `_id` tie-breaker. |
 
 ### Unnecessary Indexes Intentionally Omitted
 - **No manual index on `_id`:** MongoDB automatically creates a unique index on `_id`. Adding an explicit index on `_id` alone would be a duplicate.

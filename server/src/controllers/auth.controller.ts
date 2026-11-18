@@ -1,31 +1,22 @@
 import { Request, Response } from 'express';
 import { User, normalizeInterests } from '../models/User.js';
 import { generateToken } from '../utils/jwt.js';
+import { getErrorMessage } from '../utils/errors.js';
 
 export async function register(req: Request, res: Response): Promise<void> {
   try {
     const { name, email, password, interests } = req.body;
 
-    if (!name || !email || !password) {
-      res.status(400).json({ error: 'Name, email, and password are required' });
-      return;
-    }
-
-    if (password.length < 6) {
-      res.status(400).json({ error: 'Password must be at least 6 characters long' });
-      return;
-    }
-
-    const existingUser = await User.findOne({ email: email.toLowerCase().trim() });
+    const normalizedEmail = email.toLowerCase().trim();
+    const existingUser = await User.findOne({ email: normalizedEmail });
     if (existingUser) {
       res.status(409).json({ error: 'Email already registered' });
       return;
     }
 
-    // STRICT CONSTRAINT: Public registration ALWAYS assigns role: 'user'
     const user = await User.create({
       name: name.trim(),
-      email: email.toLowerCase().trim(),
+      email: normalizedEmail,
       password,
       role: 'user',
       interests: normalizeInterests(interests),
@@ -48,21 +39,17 @@ export async function register(req: Request, res: Response): Promise<void> {
         createdAt: user.createdAt,
       },
     });
-  } catch (error: any) {
-    res.status(500).json({ error: error.message || 'Internal server error during registration' });
+  } catch (error: unknown) {
+    res.status(500).json({ error: getErrorMessage(error) });
   }
 }
 
 export async function login(req: Request, res: Response): Promise<void> {
   try {
     const { email, password } = req.body;
+    const normalizedEmail = email.toLowerCase().trim();
 
-    if (!email || !password) {
-      res.status(400).json({ error: 'Email and password are required' });
-      return;
-    }
-
-    const user = await User.findOne({ email: email.toLowerCase().trim() });
+    const user = await User.findOne({ email: normalizedEmail });
     if (!user) {
       res.status(401).json({ error: 'Invalid email or password' });
       return;
@@ -91,8 +78,8 @@ export async function login(req: Request, res: Response): Promise<void> {
         createdAt: user.createdAt,
       },
     });
-  } catch (error: any) {
-    res.status(500).json({ error: error.message || 'Internal server error during login' });
+  } catch (error: unknown) {
+    res.status(500).json({ error: getErrorMessage(error) });
   }
 }
 
@@ -110,7 +97,7 @@ export async function getMe(req: Request, res: Response): Promise<void> {
     }
 
     res.status(200).json({ user });
-  } catch (error: any) {
-    res.status(500).json({ error: error.message || 'Internal server error' });
+  } catch (error: unknown) {
+    res.status(500).json({ error: getErrorMessage(error) });
   }
 }

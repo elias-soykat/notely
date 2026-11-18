@@ -1,13 +1,12 @@
 import { Router } from 'express';
 import { createPost, getPosts } from '../controllers/post.controller.js';
 import { authenticate } from '../middleware/auth.js';
+import { validateBody } from '../middleware/validate.js';
+import { createPostSchema } from '../schemas/validation.schemas.js';
 
 const router = Router();
 
-// Public post listing
 router.get('/', getPosts);
-
-// Authenticated post creation
-router.post('/', authenticate, createPost);
+router.post('/', authenticate, validateBody(createPostSchema), createPost);
 
 export default router;

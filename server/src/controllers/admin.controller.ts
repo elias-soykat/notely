@@ -4,6 +4,7 @@ import { User, normalizeInterests } from '../models/User.js';
 import { Note } from '../models/Note.js';
 import { Post } from '../models/Post.js';
 import { parsePaginationParams, createPaginatedResponse } from '../utils/pagination.js';
+import { getErrorMessage } from '../utils/errors.js';
 
 export async function listUsers(req: Request, res: Response): Promise<void> {
   try {
@@ -13,27 +14,23 @@ export async function listUsers(req: Request, res: Response): Promise<void> {
       User.countDocuments(),
       User.find()
         .select('-password')
-        .sort({ createdAt: -1, _id: -1 }) // Deterministic pagination tie-breaker
+        .sort({ createdAt: -1, _id: -1 })
         .skip(skip)
         .limit(limit),
     ]);
 
     res.status(200).json(createPaginatedResponse(users, totalCount, page, limit));
-  } catch (error: any) {
-    res.status(500).json({ error: error.message || 'Error listing users' });
+  } catch (error: unknown) {
+    res.status(500).json({ error: getErrorMessage(error) });
   }
 }
 
 export async function createUser(req: Request, res: Response): Promise<void> {
   try {
     const { name, email, password, role, interests } = req.body;
+    const normalizedEmail = email.toLowerCase().trim();
 
-    if (!name || !email || !password) {
-      res.status(400).json({ error: 'Name, email, and password are required' });
-      return;
-    }
-
-    const existing = await User.findOne({ email: email.toLowerCase().trim() });
+    const existing = await User.findOne({ email: normalizedEmail });
     if (existing) {
       res.status(409).json({ error: 'Email already registered' });
       return;
@@ -41,7 +38,7 @@ export async function createUser(req: Request, res: Response): Promise<void> {
 
     const user = await User.create({
       name: name.trim(),
-      email: email.toLowerCase().trim(),
+      email: normalizedEmail,
       password,
       role: role === 'admin' ? 'admin' : 'user',
       interests: normalizeInterests(interests),
@@ -57,8 +54,8 @@ export async function createUser(req: Request, res: Response): Promise<void> {
         createdAt: user.createdAt,
       },
     });
-  } catch (error: any) {
-    res.status(500).json({ error: error.message || 'Error creating user' });
+  } catch (error: unknown) {
+    res.status(500).json({ error: getErrorMessage(error) });
   }
 }
 
@@ -79,21 +76,9 @@ export async function updateUser(req: Request, res: Response): Promise<void> {
     const { name, role, interests, password } = req.body;
 
     if (name !== undefined) user.name = name.trim();
-    if (role !== undefined) {
-      if (!['user', 'admin'].includes(role)) {
-        res.status(400).json({ error: 'Validation failed: Role must be either user or admin' });
-        return;
-      }
-      user.role = role;
-    }
+    if (role !== undefined) user.role = role;
     if (interests !== undefined) user.interests = normalizeInterests(interests);
-    if (password !== undefined) {
-      if (typeof password !== 'string' || password.length < 6) {
-        res.status(400).json({ error: 'Password must be at least 6 characters long' });
-        return;
-      }
-      user.password = password;
-    }
+    if (password !== undefined) user.password = password;
 
     await user.save();
 
@@ -107,12 +92,12 @@ export async function updateUser(req: Request, res: Response): Promise<void> {
         createdAt: user.createdAt,
       },
     });
-  } catch (error: any) {
-    if (error.name === 'ValidationError') {
+  } catch (error: unknown) {
+    if (error instanceof Error && error.name === 'ValidationError') {
       res.status(400).json({ error: error.message });
       return;
     }
-    res.status(500).json({ error: error.message || 'Error updating user' });
+    res.status(500).json({ error: getErrorMessage(error) });
   }
 }
 
@@ -124,7 +109,6 @@ export async function deleteUser(req: Request, res: Response): Promise<void> {
       return;
     }
 
-    // Security guard: Prevent admin from deleting their own account
     if (req.user && req.user.id === id) {
       res.status(400).json({ error: 'Cannot delete your own admin account' });
       return;
@@ -136,15 +120,32 @@ export async function deleteUser(req: Request, res: Response): Promise<void> {
       return;
     }
 
-    // Cascade delete associated notes and posts
-    await Promise.all([
-      Note.deleteMany({ userId: user._id }),
-      Post.deleteMany({ userId: user._id }),
-      user.deleteOne(),
-    ]);
+    // Perform atomic cascade delete via transaction when supported
+    try {
+      const session = await mongoose.startSession();
+      try {
+        session.startTransaction();
+        await Note.deleteMany({ userId: user._id }).session(session);
+        await Post.deleteMany({ userId: user._id }).session(session);
+        await user.deleteOne().session(session);
+        await session.commitTransaction();
+      } catch (err) {
+        await session.abortTransaction();
+        throw err;
+      } finally {
+        session.endSession();
+      }
+    } catch {
+      // Fallback for non-replica set testing environments
+      await Promise.all([
+        Note.deleteMany({ userId: user._id }),
+        Post.deleteMany({ userId: user._id }),
+        user.deleteOne(),
+      ]);
+    }
 
     res.status(200).json({ message: 'User and associated data deleted successfully' });
-  } catch (error: any) {
-    res.status(500).json({ error: error.message || 'Error deleting user' });
+  } catch (error: unknown) {
+    res.status(500).json({ error: getErrorMessage(error) });
   }
 }

@@ -30,11 +30,7 @@ const NoteSchema = new Schema<INote>(
   }
 );
 
-// Explicit schema indexes (strictly required only)
-// 1. Supports user listing their own notes with deterministic tie-breaker sorting
 NoteSchema.index({ userId: 1, createdAt: -1, _id: -1 });
-
-// 2. Supports admin listing all notes across all users with deterministic tie-breaker sorting
 NoteSchema.index({ createdAt: -1, _id: -1 });
 
 export const Note: Model<INote> = mongoose.model<INote>('Note', NoteSchema);

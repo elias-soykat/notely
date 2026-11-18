@@ -1,7 +1,8 @@
 import { Request, Response } from 'express';
 import mongoose from 'mongoose';
-import { Note } from '../models/Note.js';
+import { Note, INote } from '../models/Note.js';
 import { parsePaginationParams, createPaginatedResponse } from '../utils/pagination.js';
+import { getErrorMessage } from '../utils/errors.js';
 
 export async function createNote(req: Request, res: Response): Promise<void> {
   try {
@@ -11,10 +12,6 @@ export async function createNote(req: Request, res: Response): Promise<void> {
     }
 
     const { title, content } = req.body;
-    if (!title || !content) {
-      res.status(400).json({ error: 'Title and content are required' });
-      return;
-    }
 
     const note = await Note.create({
       title: title.trim(),
@@ -23,8 +20,8 @@ export async function createNote(req: Request, res: Response): Promise<void> {
     });
 
     res.status(201).json({ note });
-  } catch (error: any) {
-    res.status(500).json({ error: error.message || 'Error creating note' });
+  } catch (error: unknown) {
+    res.status(500).json({ error: getErrorMessage(error) });
   }
 }
 
@@ -37,8 +34,7 @@ export async function getNotes(req: Request, res: Response): Promise<void> {
 
     const { page, limit, skip } = parsePaginationParams(req.query);
 
-    // RBAC: User can only view their own notes; Admin can view all notes (or filter by userId)
-    let filter: Record<string, any> = {};
+    const filter: mongoose.FilterQuery<INote> = {};
     if (req.user.role === 'admin') {
       if (req.query.userId && mongoose.Types.ObjectId.isValid(req.query.userId as string)) {
         filter.userId = req.query.userId;
@@ -50,14 +46,14 @@ export async function getNotes(req: Request, res: Response): Promise<void> {
     const [totalCount, notes] = await Promise.all([
       Note.countDocuments(filter),
       Note.find(filter)
-        .sort({ createdAt: -1, _id: -1 }) // Deterministic pagination tie-breaker
+        .sort({ createdAt: -1, _id: -1 })
         .skip(skip)
         .limit(limit),
     ]);
 
     res.status(200).json(createPaginatedResponse(notes, totalCount, page, limit));
-  } catch (error: any) {
-    res.status(500).json({ error: error.message || 'Error fetching notes' });
+  } catch (error: unknown) {
+    res.status(500).json({ error: getErrorMessage(error) });
   }
 }
 
@@ -80,15 +76,14 @@ export async function getNoteById(req: Request, res: Response): Promise<void> {
       return;
     }
 
-    // RBAC Check: Only owner or admin can read the note
     if (req.user.role !== 'admin' && note.userId.toString() !== req.user.id) {
       res.status(403).json({ error: 'Forbidden: You do not have permission to view this note' });
       return;
     }
 
     res.status(200).json({ note });
-  } catch (error: any) {
-    res.status(500).json({ error: error.message || 'Error fetching note' });
+  } catch (error: unknown) {
+    res.status(500).json({ error: getErrorMessage(error) });
   }
 }
 
@@ -111,7 +106,6 @@ export async function updateNote(req: Request, res: Response): Promise<void> {
       return;
     }
 
-    // Spec: User can update their own notes. Admin cannot arbitrarily overwrite user's private notes
     if (note.userId.toString() !== req.user.id) {
       res.status(403).json({ error: 'Forbidden: Only the owner can update this note' });
       return;
@@ -124,8 +118,8 @@ export async function updateNote(req: Request, res: Response): Promise<void> {
     await note.save();
 
     res.status(200).json({ note });
-  } catch (error: any) {
-    res.status(500).json({ error: error.message || 'Error updating note' });
+  } catch (error: unknown) {
+    res.status(500).json({ error: getErrorMessage(error) });
   }
 }
 
@@ -148,7 +142,6 @@ export async function deleteNote(req: Request, res: Response): Promise<void> {
       return;
     }
 
-    // Owner or Admin can delete note
     if (req.user.role !== 'admin' && note.userId.toString() !== req.user.id) {
       res.status(403).json({ error: 'Forbidden: You do not have permission to delete this note' });
       return;
@@ -157,7 +150,7 @@ export async function deleteNote(req: Request, res: Response): Promise<void> {
     await note.deleteOne();
 
     res.status(200).json({ message: 'Note deleted successfully' });
-  } catch (error: any) {
-    res.status(500).json({ error: error.message || 'Error deleting note' });
+  } catch (error: unknown) {
+    res.status(500).json({ error: getErrorMessage(error) });
   }
 }

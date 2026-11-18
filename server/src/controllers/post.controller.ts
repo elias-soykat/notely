@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
 import { Post } from '../models/Post.js';
 import { parsePaginationParams, createPaginatedResponse } from '../utils/pagination.js';
+import { getErrorMessage } from '../utils/errors.js';
 
 export async function createPost(req: Request, res: Response): Promise<void> {
   try {
@@ -10,10 +11,6 @@ export async function createPost(req: Request, res: Response): Promise<void> {
     }
 
     const { title, content } = req.body;
-    if (!title || !content) {
-      res.status(400).json({ error: 'Title and content are required' });
-      return;
-    }
 
     const post = await Post.create({
       title: title.trim(),
@@ -22,8 +19,8 @@ export async function createPost(req: Request, res: Response): Promise<void> {
     });
 
     res.status(201).json({ post });
-  } catch (error: any) {
-    res.status(500).json({ error: error.message || 'Error creating post' });
+  } catch (error: unknown) {
+    res.status(500).json({ error: getErrorMessage(error) });
   }
 }
 
@@ -40,7 +37,7 @@ export async function getPosts(req: Request, res: Response): Promise<void> {
     ]);
 
     res.status(200).json(createPaginatedResponse(posts, totalCount, page, limit));
-  } catch (error: any) {
-    res.status(500).json({ error: error.message || 'Error fetching posts' });
+  } catch (error: unknown) {
+    res.status(500).json({ error: getErrorMessage(error) });
   }
 }

@@ -12,13 +12,13 @@ export interface PaginatedResult<T> {
   data: T[];
 }
 
-export function parsePaginationParams(query: Record<string, any>): PaginationParams {
-  const parsedPage = parseInt(query.page as string, 10);
-  const parsedLimit = parseInt(query.limit as string, 10);
+export function parsePaginationParams(query: Record<string, unknown>): PaginationParams {
+  const parsedPage = typeof query.page === 'string' ? parseInt(query.page, 10) : Number(query.page);
+  const parsedLimit = typeof query.limit === 'string' ? parseInt(query.limit, 10) : Number(query.limit);
 
   const page = !isNaN(parsedPage) && parsedPage > 0 ? parsedPage : 1;
   const rawLimit = !isNaN(parsedLimit) && parsedLimit > 0 ? parsedLimit : 10;
-  const limit = Math.min(rawLimit, 100); // Guard against unbounded limit
+  const limit = Math.min(rawLimit, 100);
   const skip = (page - 1) * limit;
 
   return { page, limit, skip };

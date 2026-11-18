@@ -45,12 +45,10 @@ const UserSchema = new Schema<IUser>(
   }
 );
 
-// Explicit schema indexes (strictly required only, using schema.index as specified)
 UserSchema.index({ email: 1 }, { unique: true });
 UserSchema.index({ createdAt: -1, _id: -1 });
 
-// Helper to normalize interests: trim, lowercase, remove empty, and deduplicate
-export function normalizeInterests(interests: any): string[] {
+export function normalizeInterests(interests: unknown): string[] {
   if (!Array.isArray(interests)) return [];
   return Array.from(
     new Set(
@@ -61,7 +59,6 @@ export function normalizeInterests(interests: any): string[] {
   );
 }
 
-// Pre-save hook: normalizes interests and hashes password
 UserSchema.pre<IUser>('save', async function (next) {
   if (this.interests && Array.isArray(this.interests)) {
     this.interests = normalizeInterests(this.interests);
@@ -74,12 +71,11 @@ UserSchema.pre<IUser>('save', async function (next) {
     const salt = await bcrypt.genSalt(10);
     this.password = await bcrypt.hash(this.password, salt);
     next();
-  } catch (error: any) {
-    next(error);
+  } catch (error: unknown) {
+    next(error instanceof Error ? error : new Error(String(error)));
   }
 });
 
-// Compare password method
 UserSchema.methods.comparePassword = async function (candidatePassword: string): Promise<boolean> {
   return bcrypt.compare(candidatePassword, this.password);
 };

@@ -30,8 +30,6 @@ const PostSchema = new Schema<IPost>(
   }
 );
 
-// Explicit schema index (strictly required only)
-// Supports retrieving user posts, deterministic tie-breaker sorting, and foreignField matching in $lookup
 PostSchema.index({ userId: 1, createdAt: -1, _id: -1 });
 
 export const Post: Model<IPost> = mongoose.model<IPost>('Post', PostSchema);

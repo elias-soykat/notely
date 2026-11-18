@@ -22,6 +22,16 @@ export const AdminView: React.FC = () => {
   const [interests, setInterests] = useState('');
   const [error, setError] = useState<string | null>(null);
 
+  // Modal states
+  const [roleChangeTarget, setRoleChangeTarget] = useState<{
+    user: UserItem;
+    targetRole: 'user' | 'admin';
+  } | null>(null);
+  const [roleChangeError, setRoleChangeError] = useState<string | null>(null);
+
+  const [deletingUser, setDeletingUser] = useState<UserItem | null>(null);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
+
   const fetchUsers = async (p = page) => {
     try {
       setError(null);
@@ -60,26 +70,41 @@ export const AdminView: React.FC = () => {
     }
   };
 
-  const handleToggleRole = async (user: UserItem) => {
-    const newRole = user.role === 'admin' ? 'user' : 'admin';
+  const openRoleChangeModal = (user: UserItem) => {
+    const targetRole = user.role === 'admin' ? 'user' : 'admin';
+    setRoleChangeTarget({ user, targetRole });
+    setRoleChangeError(null);
+  };
+
+  const handleConfirmRoleChange = async () => {
+    if (!roleChangeTarget) return;
     try {
-      await request(`/admin/users/${user._id}`, {
+      setRoleChangeError(null);
+      await request(`/admin/users/${roleChangeTarget.user._id}`, {
         method: 'PUT',
-        body: JSON.stringify({ role: newRole }),
+        body: JSON.stringify({ role: roleChangeTarget.targetRole }),
       });
+      setRoleChangeTarget(null);
       fetchUsers(page);
     } catch (err: any) {
-      setError(err.message);
+      setRoleChangeError(err.message);
     }
   };
 
-  const handleDeleteUser = async (id: string) => {
-    if (!window.confirm('Delete this user and all their notes/posts?')) return;
+  const openDeleteModal = (user: UserItem) => {
+    setDeletingUser(user);
+    setDeleteError(null);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!deletingUser) return;
     try {
-      await request(`/admin/users/${id}`, { method: 'DELETE' });
+      setDeleteError(null);
+      await request(`/admin/users/${deletingUser._id}`, { method: 'DELETE' });
+      setDeletingUser(null);
       fetchUsers(page);
     } catch (err: any) {
-      setError(err.message);
+      setDeleteError(err.message);
     }
   };
 
@@ -161,10 +186,10 @@ export const AdminView: React.FC = () => {
                 <td>{u.interests?.join(', ') || '-'}</td>
                 <td>{new Date(u.createdAt).toLocaleDateString()}</td>
                 <td>
-                  <button onClick={() => handleToggleRole(u)}>
+                  <button onClick={() => openRoleChangeModal(u)}>
                     Switch to {u.role === 'admin' ? 'User' : 'Admin'}
                   </button>{' '}
-                  <button className="danger" onClick={() => handleDeleteUser(u._id)}>
+                  <button className="danger" onClick={() => openDeleteModal(u)}>
                     Delete
                   </button>
                 </td>
@@ -185,6 +210,75 @@ export const AdminView: React.FC = () => {
           </button>
         </div>
       </div>
+
+      {/* Switch Role Confirmation Modal */}
+      {roleChangeTarget && (
+        <div className="modal-overlay" onClick={() => setRoleChangeTarget(null)}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+            <h3 style={{ marginTop: 0 }}>Confirm Role Change</h3>
+            {roleChangeError && (
+              <div style={{ color: 'red', marginBottom: 8 }}>{roleChangeError}</div>
+            )}
+            <p>
+              Are you sure you want to change <strong>{roleChangeTarget.user.name}</strong> (
+              {roleChangeTarget.user.email}) from{' '}
+              <span className="badge">{roleChangeTarget.user.role.toUpperCase()}</span> to{' '}
+              <span className="badge badge-admin">
+                {roleChangeTarget.targetRole.toUpperCase()}
+              </span>
+              ?
+            </p>
+            <div className="modal-actions">
+              <button
+                type="button"
+                onClick={() => setRoleChangeTarget(null)}
+                style={{ background: '#777' }}
+              >
+                Cancel
+              </button>
+              <button type="button" onClick={handleConfirmRoleChange}>
+                Confirm Role Change
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Delete User Confirmation Alert Modal */}
+      {deletingUser && (
+        <div className="modal-overlay" onClick={() => setDeletingUser(null)}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+            <h3 style={{ marginTop: 0, color: '#cc0000' }}>Confirm User Deletion</h3>
+            {deleteError && (
+              <div style={{ color: 'red', marginBottom: 8 }}>{deleteError}</div>
+            )}
+            <p>
+              Are you sure you want to delete user <strong>{deletingUser.name}</strong> (
+              {deletingUser.email})?
+            </p>
+            <p style={{ fontSize: 13, color: '#666' }}>
+              Warning: This action will permanently remove the account and cascade delete all
+              associated notes and posts. This action cannot be undone.
+            </p>
+            <div className="modal-actions">
+              <button
+                type="button"
+                onClick={() => setDeletingUser(null)}
+                style={{ background: '#777' }}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                className="danger"
+                onClick={handleConfirmDelete}
+              >
+                Delete User
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

@@ -4,6 +4,14 @@ A full-stack, secure note-taking and user management application built with **Ty
 
 ---
 
+## Live Deployments
+
+- **Live Frontend Website:** [https://notely-client-eight.vercel.app](https://notely-client-eight.vercel.app)
+- **Live Backend REST API:** [https://api-production-54abc6c2.up.railway.app](https://api-production-54abc6c2.up.railway.app)
+- **API Health Check:** [https://api-production-54abc6c2.up.railway.app/api/health](https://api-production-54abc6c2.up.railway.app/api/health)
+
+---
+
 ## Features
 
 - **Authentication & RBAC:** Secure JWT authentication with role-based access control (`user` and `admin`).

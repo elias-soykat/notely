@@ -23,7 +23,32 @@ app.use('/api/aggregations', aggregationRoutes);
 app.use('/api/posts', postRoutes);
 app.use('/api/users', userRoutes);
 
-// Health check
+// Root and Health check endpoints
+app.get('/', (_req: Request, res: Response) => {
+  res.status(200).json({
+    status: 'ok',
+    name: 'Notely REST API',
+    health: '/api/health',
+    endpoints: {
+      auth: '/api/auth',
+      notes: '/api/notes',
+      admin: '/api/admin',
+      aggregations: '/api/aggregations',
+      posts: '/api/posts',
+      users: '/api/users',
+      health: '/api/health'
+    }
+  });
+});
+
+app.get('/api', (_req: Request, res: Response) => {
+  res.status(200).json({
+    status: 'ok',
+    name: 'Notely REST API',
+    health: '/api/health'
+  });
+});
+
 app.get('/api/health', (_req: Request, res: Response) => {
   res.status(200).json({ status: 'ok', timestamp: new Date().toISOString() });
 });

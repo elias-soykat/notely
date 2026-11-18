@@ -7,8 +7,8 @@ async function startServer() {
     await connectDB();
     console.log(`Connected to MongoDB Atlas [${config.nodeEnv}]`);
 
-    const server = app.listen(config.port, () => {
-      console.log(`Notely API Server listening on port ${config.port}`);
+    const server = app.listen(config.port, '0.0.0.0', () => {
+      console.log(`Notely API Server listening on 0.0.0.0:${config.port}`);
     });
 
     const shutdown = (signal: string) => {

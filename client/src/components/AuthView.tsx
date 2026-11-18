@@ -42,60 +42,56 @@ export const AuthView: React.FC<AuthViewProps> = ({ onLoginSuccess }) => {
   };
 
   return (
-    <div className="card" style={{ maxWidth: 400, margin: '40px auto' }}>
-      <h2>{isRegister ? 'Register' : 'Login'}</h2>
-      {error && <div style={{ color: 'red', marginBottom: 8 }}>{error}</div>}
+    <div className="card" style={{ maxWidth: 420, margin: '40px auto' }}>
+      <h2 style={{ marginTop: 0, marginBottom: 20 }}>{isRegister ? 'Register' : 'Login'}</h2>
+      {error && <div style={{ color: 'red', marginBottom: 12 }}>{error}</div>}
       <form onSubmit={handleSubmit}>
         {isRegister && (
           <div>
-            <label>Name:</label>
+            <label style={{ fontWeight: 500 }}>Name:</label>
             <input
               type="text"
               required
               value={name}
               onChange={(e) => setName(e.target.value)}
-              style={{ width: '100%' }}
             />
           </div>
         )}
         <div>
-          <label>Email:</label>
+          <label style={{ fontWeight: 500 }}>Email:</label>
           <input
             type="email"
             required
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            style={{ width: '100%' }}
           />
         </div>
         <div>
-          <label>Password:</label>
+          <label style={{ fontWeight: 500 }}>Password:</label>
           <input
             type="password"
             required
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            style={{ width: '100%' }}
           />
         </div>
         {isRegister && (
           <div>
-            <label>Interests (comma-separated):</label>
+            <label style={{ fontWeight: 500 }}>Interests (comma-separated):</label>
             <input
               type="text"
               value={interests}
               onChange={(e) => setInterests(e.target.value)}
-              style={{ width: '100%' }}
             />
           </div>
         )}
-        <div style={{ marginTop: 12 }}>
-          <button type="submit" style={{ width: '100%' }}>
+        <div style={{ marginTop: 18 }}>
+          <button type="submit" style={{ width: '100%', padding: '11px', fontSize: 15 }}>
             {isRegister ? 'Create Account' : 'Sign In'}
           </button>
         </div>
       </form>
-      <div style={{ marginTop: 12, textAlign: 'center' }}>
+      <div style={{ marginTop: 16, textAlign: 'center' }}>
         <button
           onClick={() => {
             setIsRegister(!isRegister);

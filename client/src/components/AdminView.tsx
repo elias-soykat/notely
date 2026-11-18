@@ -114,47 +114,56 @@ export const AdminView: React.FC = () => {
         <h3>Admin: Add New User</h3>
         {error && <div style={{ color: 'red', marginBottom: 8 }}>{error}</div>}
         <form onSubmit={handleCreateUser}>
-          <div style={{ display: 'flex', gap: 8 }}>
-            <input
-              placeholder="Name"
-              required
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              style={{ flex: 1 }}
-            />
-            <input
-              type="email"
-              placeholder="Email"
-              required
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              style={{ flex: 1 }}
-            />
-            <input
-              type="password"
-              placeholder="Password (min 6)"
-              required
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              style={{ flex: 1 }}
-            />
-            <select
-              value={role}
-              onChange={(e) => setRole(e.target.value as any)}
-            >
-              <option value="user">User</option>
-              <option value="admin">Admin</option>
-            </select>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 12 }}>
+            <div>
+              <label style={{ fontSize: 13, fontWeight: 500 }}>Name:</label>
+              <input
+                placeholder="Name"
+                required
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+              />
+            </div>
+            <div>
+              <label style={{ fontSize: 13, fontWeight: 500 }}>Email:</label>
+              <input
+                type="email"
+                placeholder="Email"
+                required
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+              />
+            </div>
+            <div>
+              <label style={{ fontSize: 13, fontWeight: 500 }}>Password:</label>
+              <input
+                type="password"
+                placeholder="Password (min 6)"
+                required
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+              />
+            </div>
+            <div>
+              <label style={{ fontSize: 13, fontWeight: 500 }}>Role:</label>
+              <select
+                value={role}
+                onChange={(e) => setRole(e.target.value as any)}
+              >
+                <option value="user">User</option>
+                <option value="admin">Admin</option>
+              </select>
+            </div>
           </div>
-          <div style={{ marginTop: 8 }}>
+          <div>
+            <label style={{ fontSize: 13, fontWeight: 500 }}>Interests (comma-separated):</label>
             <input
-              placeholder="Interests (comma separated: e.g. chess, reading)"
+              placeholder="e.g. chess, reading, security"
               value={interests}
               onChange={(e) => setInterests(e.target.value)}
-              style={{ width: '100%' }}
             />
           </div>
-          <button type="submit" style={{ marginTop: 8 }}>
+          <button type="submit">
             Create User
           </button>
         </form>

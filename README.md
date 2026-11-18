@@ -1,150 +1,156 @@
-# Notely - Secure Note-Taking Application
+# Notely
 
-A secure, optimized REST API and functional web application built in **TypeScript** using **Express**, **MongoDB Atlas**, **Mongoose**, **JWT Authentication**, and **pnpm**, adhering strictly to the constraints outlined in [Backend Task Requirements.md](./Backend%20Task%20Requirements.md).
-
----
-
-## 1. Overview & Architecture
-
-- **Backend:** Express REST API with TypeScript in `server/`, architected with strict layering:
-  - `src/models/`: Mongoose schemas declaring explicit indexes using `schema.index(...)` without redundant indexes.
-  - `src/middleware/`: JWT verification (`authenticate`) and role-based access control (`requireRole`).
-  - `src/controllers/`: Business logic handling pagination, authorization, and aggregation pipelines.
-  - `src/routes/`: Route declarations mounted at `/api/auth`, `/api/notes`, `/api/admin`, `/api/posts`, `/api/users`, and `/api/aggregations`.
-- **Frontend:** Lightweight, unstyled Vite + React SPA in `client/` built strictly for functionality and integration (auth token persistence, note CRUD with pagination, admin user management, and aggregation visualizations).
-- **Database:** Cloud-hosted MongoDB Atlas.
+A full-stack, secure note-taking and user management application built with **TypeScript**, **Node.js/Express**, **React (Vite)**, and **MongoDB**.
 
 ---
 
-## 2. Roles & Permissions (RBAC)
+## Features
 
-| Role | Permissions |
-| :--- | :--- |
-| **User** | Create, view, update, and delete their own notes; view public posts; view profile. |
-| **Admin** | Inherits all User capabilities; can view everyone's notes; can manage users (list, create, update roles/details, delete). |
-
-> **Security Note on Registration:** Public registration via `POST /api/auth/register` **strictly assigns the `user` role**. Admin accounts cannot be self-registered and are created exclusively via the administrative seed script or by an existing admin.
-
----
-
-## 3. Database Indexing Strategy (`schema.index`)
-
-Per the core requirement to create **only strictly required indexes** and define them via `schema.index`:
-
-| Collection | Declared Index (`schema.index`) | Purpose | Optimization Details |
-| :--- | :--- | :--- | :--- |
-| **User** | `{ email: 1 }` (unique) | Unique login & email search | Enforces uniqueness and speeds up `findOne({ email })`. |
-| **User** | `{ createdAt: -1, _id: -1 }` | Admin user listing | Supports descending date sort with `_id` deterministic tie-breaker for pagination. |
-| **Note** | `{ userId: 1, createdAt: -1, _id: -1 }` | User note listing | Equality filter on `userId` combined with compound descending sort on `createdAt` and `_id`. |
-| **Note** | `{ createdAt: -1, _id: -1 }` | Admin viewing all notes | Supports global descending date sort with `_id` tie-breaker. |
-| **Post** | `{ userId: 1, createdAt: -1, _id: -1 }` | User posts retrieval & `$lookup` | Supports filtering by `userId`, `$lookup` foreignField matching, and tie-breaker sorting. |
-| **Post** | `{ createdAt: -1, _id: -1 }` | Public posts listing | Supports global descending date sort with `_id` tie-breaker. |
-
-### Unnecessary Indexes Intentionally Omitted
-- **No manual index on `_id`:** MongoDB automatically creates a unique index on `_id`. Adding an explicit index on `_id` alone would be a duplicate.
-- **No `{ interests: 1 }` multikey index:** The Group by Interests aggregation performs an `$unwind` followed by a `$group` across all users. An index on `interests` is not utilized by `$unwind` without a preceding selective `$match` filter, making it redundant overhead.
-
-Execution plans were verified in `tests/indexing.audit.test.ts` to confirm `IXSCAN` on all targeted queries.
+- **Authentication & RBAC:** Secure JWT authentication with role-based access control (`user` and `admin`).
+- **Notes Management:** Create, view, update, and delete personal notes with deterministic pagination.
+- **Admin Dashboard:** Administrative user management (CRUD) and global note inspection.
+- **Data Aggregations:** MongoDB aggregation pipelines for grouping users by interests and loading posts via `$lookup`.
+- **Optimized Indexing:** Compound indexes on MongoDB collections for high-performance sorting and querying.
 
 ---
 
-## 4. MongoDB Aggregation Pipelines
-
-### Scenario 1: Group Users by Interests
-- **Endpoint:** `GET /api/aggregations/users-by-interests`
-- **Constraint:** Executed via **exactly one** `User.aggregate()` call:
-```typescript
-User.aggregate([
-  { $unwind: '$interests' },
-  {
-    $group: {
-      _id: '$interests',
-      count: { $sum: 1 },
-      users: {
-        $push: { _id: '$_id', name: '$name', email: '$email' },
-      },
-    },
-  },
-  { $sort: { count: -1, _id: 1 } },
-]);
-```
-
-### Scenario 2: User Posts (`$lookup`)
-- **Endpoint:** `GET /api/users/:userId/posts?page=1&limit=10`
-- **Constraint:** Executed via a **single aggregation pipeline** beginning with `$match: { _id: userId }` on `User`, followed by `$lookup` with sorting and pagination applied inside the lookup sub-pipeline:
-```typescript
-User.aggregate([
-  { $match: { _id: new Types.ObjectId(userId) } },
-  {
-    $lookup: {
-      from: 'posts',
-      let: { uId: '$_id' },
-      pipeline: [
-        { $match: { $expr: { $eq: ['$userId', '$$uId'] } } },
-        { $sort: { createdAt: -1, _id: -1 } },
-        { $skip: skip },
-        { $limit: limit },
-      ],
-      as: 'posts',
-    },
-  },
-  {
-    $project: {
-      _id: 1,
-      name: 1,
-      email: 1,
-      role: 1,
-      interests: 1,
-      posts: 1,
-      createdAt: 1,
-    },
-  },
-]);
-```
-
----
-
-## 5. Seed Accounts & Credentials
-
-Run `pnpm seed` to populate sample data:
-
-| Account | Email | Password | Role | Interests |
-| :--- | :--- | :--- | :--- | :--- |
-| **System Admin** | `admin@notely.com` | `admin123` | `admin` | `management`, `security`, `cloud` |
-| **User Alice** | `alice@notely.com` | `user123` | `user` | `chess`, `reading` |
-| **User Bob** | `bob@notely.com` | `user123` | `user` | `reading`, `coding` |
-| **User Charlie** | `charlie@notely.com` | `user123` | `user` | `chess`, `gaming` |
-
----
-
-## 6. Getting Started
+## Quick Start (First-Time Setup)
 
 ### Prerequisites
-- Node.js >= 18
-- pnpm >= 8
 
-### Installation & Environment
+- **Node.js** (v18 or higher)
+- **pnpm** (v8 or higher)
+- A **MongoDB** database (MongoDB Atlas connection string or local MongoDB instance)
+
+### 1. Install Dependencies
+
+Install packages across the entire workspace from the project root:
+
 ```bash
-# 1. Install dependencies across workspace
 pnpm install
-
-# 2. Configure environment variables in server/.env
-# MONGODB_URI and TEST_MONGODB_URI point to your MongoDB Atlas cluster.
 ```
 
-### Seed Data
+### 2. Configure Environment Variables
+
+Create a `.env` file in the project root (or inside `server/`) based on `.env.example`:
+
+```bash
+cp .env.example .env
+```
+
+Ensure your `.env` contains valid values for your MongoDB database and JWT secret:
+
+```env
+PORT=5000
+NODE_ENV=development
+MONGODB_URI=mongodb+srv://<username>:<password>@cluster0.mongodb.net/notely?retryWrites=true&w=majority
+TEST_MONGODB_URI=mongodb+srv://<username>:<password>@cluster0.mongodb.net/notely_test?retryWrites=true&w=majority
+JWT_SECRET=your_super_secret_jwt_key_at_least_32_chars
+JWT_EXPIRES_IN=1d
+```
+
+### 3. Seed the Database
+
+Populate the database with sample users, notes, and posts:
+
 ```bash
 pnpm seed
 ```
 
-### Run Automated Test Suite (100% Passing)
-```bash
-pnpm test
-```
+### 4. Start the Application
 
-### Run Full Application (Server + Frontend)
+Start both the backend API and frontend client concurrently:
+
 ```bash
 pnpm dev
 ```
-- API Server: `http://localhost:5000`
-- Frontend Client: `http://localhost:3000`
+
+- **Frontend App:** [http://localhost:3000](http://localhost:3000)
+- **Backend API:** [http://localhost:5000](http://localhost:5000)
+- **Health Check:** [http://localhost:5000/api/health](http://localhost:5000/api/health)
+
+---
+
+## Seed Accounts & Credentials
+
+The seed script (`pnpm seed`) initializes the following accounts:
+
+| Role | Email | Password | Details |
+| :--- | :--- | :--- | :--- |
+| **Admin** | `admin@notely.com` | `admin123` | Full access: user management, global notes |
+| **User** | `alice@notely.com` | `user123` | Standard user: personal notes |
+| **User** | `bob@notely.com` | `user123` | Standard user: personal notes |
+| **User** | `charlie@notely.com` | `user123` | Standard user: personal notes |
+
+> **Note:** Public registration (`POST /api/auth/register`) automatically assigns the `user` role. Admin accounts must be created by an existing administrator or via the seed script.
+
+---
+
+## Available Scripts
+
+Run these commands from the project root:
+
+| Command | Description |
+| :--- | :--- |
+| `pnpm dev` | Starts both backend and frontend development servers concurrently |
+| `pnpm build` | Builds both backend (`tsc`) and frontend (`vite build`) for production |
+| `pnpm test` | Runs the automated backend test suite via Vitest |
+| `pnpm seed` | Seeds the database with default test accounts, notes, and posts |
+| `pnpm --filter server sync-indexes` | Synchronizes declared Mongoose schema indexes with MongoDB |
+
+---
+
+## Project Structure
+
+```text
+notely/
+├── client/                     # Frontend Vite + React SPA
+│   ├── src/
+│   │   ├── components/         # Auth, Notes, Admin, & Aggregations views
+│   │   ├── api.ts              # API client helper
+│   │   ├── App.tsx             # Root application component
+│   │   └── main.tsx            # Entry point
+│   └── vite.config.ts          # Vite configuration & /api proxy to port 5000
+│
+├── server/                     # Backend Express REST API
+│   ├── src/
+│   │   ├── config/             # Database connection and environment config
+│   │   ├── controllers/        # Route controllers & business logic
+│   │   ├── middleware/         # Auth (JWT), RBAC, rate-limiting, and validation
+│   │   ├── models/             # Mongoose schemas with compound indexes
+│   │   ├── routes/             # Express route definitions
+│   │   ├── schemas/            # Zod validation schemas
+│   │   └── scripts/            # Seed and index sync scripts
+│   └── tests/                  # Unit and integration test suites (Vitest)
+│
+├── .env.example                # Example environment variables
+├── package.json                # Monorepo scripts and workspace config
+└── pnpm-workspace.yaml         # pnpm workspace definition
+```
+
+---
+
+## API Overview
+
+### Authentication (`/api/auth`)
+- `POST /api/auth/register` - Register a new user (`user` role)
+- `POST /api/auth/login` - Authenticate and obtain JWT token
+- `GET /api/auth/profile` - Fetch authenticated user profile
+
+### Notes (`/api/notes`)
+- `GET /api/notes?page=1&limit=10` - List user's notes (paginated)
+- `POST /api/notes` - Create a note
+- `GET /api/notes/:id` - Get a note by ID
+- `PUT /api/notes/:id` - Update a note
+- `DELETE /api/notes/:id` - Delete a note
+
+### Admin (`/api/admin`) *(Admin role required)*
+- `GET /api/admin/users` - List all registered users
+- `POST /api/admin/users` - Create a new user (can assign roles)
+- `PUT /api/admin/users/:id` - Update user details or role
+- `DELETE /api/admin/users/:id` - Delete a user
+
+### Aggregations & Posts
+- `GET /api/aggregations/users-by-interests` - Group users by interests with user counts
+- `GET /api/users/:userId/posts?page=1&limit=10` - Retrieve user posts via `$lookup` pipeline
+- `GET /api/posts` - List all public posts

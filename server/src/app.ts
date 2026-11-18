@@ -3,6 +3,7 @@ import cors from 'cors';
 import authRoutes from './routes/auth.routes.js';
 import noteRoutes from './routes/note.routes.js';
 import adminRoutes from './routes/admin.routes.js';
+import aggregationRoutes from './routes/aggregation.routes.js';
 
 export const app: Application = express();
 
@@ -13,6 +14,7 @@ app.use(express.json());
 app.use('/api/auth', authRoutes);
 app.use('/api/notes', noteRoutes);
 app.use('/api/admin', adminRoutes);
+app.use('/api/aggregations', aggregationRoutes);
 
 // Health check
 app.get('/api/health', (req: Request, res: Response) => {

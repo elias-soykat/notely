@@ -37,23 +37,48 @@ export const App: React.FC = () => {
   };
 
   if (loading) {
-    return <div style={{ padding: 40, textAlign: 'center' }}>Loading Notely...</div>;
+    return (
+      <div
+        style={{
+          flex: 1,
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          padding: 40,
+        }}
+      >
+        Loading Notely...
+      </div>
+    );
   }
 
   if (!currentUser) {
     return (
-      <div>
-        <header style={{ textAlign: 'center', marginBottom: 20 }}>
-          <h1>Notely</h1>
-          <p>Secure Note-Taking Application with Role-Based Access Control</p>
-        </header>
-        <AuthView onLoginSuccess={(user) => setCurrentUser(user)} />
+      <div
+        style={{
+          flex: 1,
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          padding: '24px 16px',
+        }}
+      >
+        <div style={{ width: '100%', maxWidth: 420, margin: 'auto' }}>
+          <header style={{ textAlign: 'center', marginBottom: 24 }}>
+            <h1 style={{ margin: '0 0 8px 0' }}>Notely</h1>
+            <p style={{ margin: 0, color: '#666', fontSize: 14 }}>
+              Secure Note-Taking Application with Role-Based Access Control
+            </p>
+          </header>
+          <AuthView onLoginSuccess={(user) => setCurrentUser(user)} />
+        </div>
       </div>
     );
   }
 
   return (
-    <div style={{ maxWidth: 900, margin: '0 auto' }}>
+    <div style={{ maxWidth: 900, width: '100%', margin: '0 auto', padding: '20px', boxSizing: 'border-box' }}>
       <header
         style={{
           display: 'flex',

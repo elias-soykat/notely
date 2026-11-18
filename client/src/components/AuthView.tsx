@@ -42,7 +42,7 @@ export const AuthView: React.FC<AuthViewProps> = ({ onLoginSuccess }) => {
   };
 
   return (
-    <div className="card" style={{ maxWidth: 420, margin: '40px auto' }}>
+    <div className="card" style={{ width: '100%', margin: 0 }}>
       <h2 style={{ marginTop: 0, marginBottom: 20 }}>{isRegister ? 'Register' : 'Login'}</h2>
       {error && <div style={{ color: 'red', marginBottom: 12 }}>{error}</div>}
       <form onSubmit={handleSubmit}>

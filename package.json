@@ -3,9 +3,9 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
-    "dev": "pnpm --parallel --filter notely-server --filter notely-client dev",
+    "dev": "pnpm --parallel --filter server --filter client dev",
     "build": "pnpm --recursive build",
-    "test": "pnpm --filter notely-server test",
-    "seed": "pnpm --filter notely-server seed"
+    "test": "pnpm --filter server test",
+    "seed": "pnpm --filter server seed"
   }
 }

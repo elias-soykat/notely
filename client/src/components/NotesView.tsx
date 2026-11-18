@@ -20,10 +20,16 @@ export const NotesView: React.FC<NotesViewProps> = ({ currentUser }) => {
   const [totalCount, setTotalCount] = useState(0);
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
-  const [editingId, setEditingId] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  // Modal states
+  const [editingNote, setEditingNote] = useState<Note | null>(null);
   const [editTitle, setEditTitle] = useState('');
   const [editContent, setEditContent] = useState('');
-  const [error, setError] = useState<string | null>(null);
+  const [editError, setEditError] = useState<string | null>(null);
+
+  const [deletingNote, setDeletingNote] = useState<Note | null>(null);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
 
   const fetchNotes = async (p = page) => {
     try {
@@ -57,26 +63,43 @@ export const NotesView: React.FC<NotesViewProps> = ({ currentUser }) => {
     }
   };
 
-  const handleUpdate = async (id: string) => {
+  const openEditModal = (note: Note) => {
+    setEditingNote(note);
+    setEditTitle(note.title);
+    setEditContent(note.content);
+    setEditError(null);
+  };
+
+  const handleSaveEdit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingNote) return;
     try {
-      await request(`/notes/${id}`, {
+      setEditError(null);
+      await request(`/notes/${editingNote._id}`, {
         method: 'PUT',
         body: JSON.stringify({ title: editTitle, content: editContent }),
       });
-      setEditingId(null);
+      setEditingNote(null);
       fetchNotes(page);
     } catch (err: any) {
-      setError(err.message);
+      setEditError(err.message);
     }
   };
 
-  const handleDelete = async (id: string) => {
-    if (!window.confirm('Delete this note?')) return;
+  const openDeleteModal = (note: Note) => {
+    setDeletingNote(note);
+    setDeleteError(null);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!deletingNote) return;
     try {
-      await request(`/notes/${id}`, { method: 'DELETE' });
+      setDeleteError(null);
+      await request(`/notes/${deletingNote._id}`, { method: 'DELETE' });
+      setDeletingNote(null);
       fetchNotes(page);
     } catch (err: any) {
-      setError(err.message);
+      setDeleteError(err.message);
     }
   };
 
@@ -130,58 +153,25 @@ export const NotesView: React.FC<NotesViewProps> = ({ currentUser }) => {
             <tbody>
               {notes.map((note) => (
                 <tr key={note._id}>
-                  {editingId === note._id ? (
-                    <>
-                      <td>
-                        <input
-                          value={editTitle}
-                          onChange={(e) => setEditTitle(e.target.value)}
-                        />
-                      </td>
-                      <td>
-                        <input
-                          value={editContent}
-                          onChange={(e) => setEditContent(e.target.value)}
-                        />
-                      </td>
-                      <td>{new Date(note.createdAt).toLocaleString()}</td>
-                      {currentUser.role === 'admin' && <td>{note.userId}</td>}
-                      <td>
-                        <button onClick={() => handleUpdate(note._id)}>Save</button>{' '}
-                        <button onClick={() => setEditingId(null)} style={{ background: '#777' }}>
-                          Cancel
-                        </button>
-                      </td>
-                    </>
-                  ) : (
-                    <>
-                      <td><strong>{note.title}</strong></td>
-                      <td>{note.content}</td>
-                      <td>{new Date(note.createdAt).toLocaleString()}</td>
-                      {currentUser.role === 'admin' && <td><code>{note.userId}</code></td>}
-                      <td>
-                        {note.userId === currentUser.id && (
-                          <button
-                            onClick={() => {
-                              setEditingId(note._id);
-                              setEditTitle(note.title);
-                              setEditContent(note.content);
-                            }}
-                          >
-                            Edit
-                          </button>
-                        )}{' '}
-                        {(note.userId === currentUser.id || currentUser.role === 'admin') && (
-                          <button
-                            className="danger"
-                            onClick={() => handleDelete(note._id)}
-                          >
-                            Delete
-                          </button>
-                        )}
-                      </td>
-                    </>
-                  )}
+                  <td><strong>{note.title}</strong></td>
+                  <td>{note.content}</td>
+                  <td>{new Date(note.createdAt).toLocaleString()}</td>
+                  {currentUser.role === 'admin' && <td><code>{note.userId}</code></td>}
+                  <td>
+                    {note.userId === currentUser.id && (
+                      <button onClick={() => openEditModal(note)}>
+                        Edit
+                      </button>
+                    )}{' '}
+                    {(note.userId === currentUser.id || currentUser.role === 'admin') && (
+                      <button
+                        className="danger"
+                        onClick={() => openDeleteModal(note)}
+                      >
+                        Delete
+                      </button>
+                    )}
+                  </td>
                 </tr>
               ))}
             </tbody>
@@ -200,6 +190,82 @@ export const NotesView: React.FC<NotesViewProps> = ({ currentUser }) => {
           </button>
         </div>
       </div>
+
+      {/* Edit Note Modal */}
+      {editingNote && (
+        <div className="modal-overlay" onClick={() => setEditingNote(null)}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+            <h3 style={{ marginTop: 0 }}>Edit Note</h3>
+            {editError && <div style={{ color: 'red', marginBottom: 8 }}>{editError}</div>}
+            <form onSubmit={handleSaveEdit}>
+              <div>
+                <label><strong>Title:</strong></label>
+                <input
+                  type="text"
+                  required
+                  value={editTitle}
+                  onChange={(e) => setEditTitle(e.target.value)}
+                  style={{ width: '100%' }}
+                />
+              </div>
+              <div style={{ marginTop: 10 }}>
+                <label><strong>Content:</strong></label>
+                <textarea
+                  required
+                  rows={5}
+                  value={editContent}
+                  onChange={(e) => setEditContent(e.target.value)}
+                  style={{ width: '100%' }}
+                />
+              </div>
+              <div className="modal-actions">
+                <button
+                  type="button"
+                  onClick={() => setEditingNote(null)}
+                  style={{ background: '#777' }}
+                >
+                  Cancel
+                </button>
+                <button type="submit">
+                  Save Changes
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Confirmation Alert Modal */}
+      {deletingNote && (
+        <div className="modal-overlay" onClick={() => setDeletingNote(null)}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+            <h3 style={{ marginTop: 0, color: '#cc0000' }}>Confirm Deletion</h3>
+            {deleteError && <div style={{ color: 'red', marginBottom: 8 }}>{deleteError}</div>}
+            <p>
+              Are you sure you want to delete the note <strong>"{deletingNote.title}"</strong>?
+            </p>
+            <p style={{ fontSize: 13, color: '#666' }}>
+              This action is permanent and cannot be undone.
+            </p>
+            <div className="modal-actions">
+              <button
+                type="button"
+                onClick={() => setDeletingNote(null)}
+                style={{ background: '#777' }}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                className="danger"
+                onClick={handleConfirmDelete}
+              >
+                Delete Note
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
